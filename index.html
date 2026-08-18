@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4a00e0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="ZA DLC Tracker">
+  <title>Hyperspace Pokédex Tracker</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #0f0c2e 0%, #1a1040 50%, #0d1f3c 100%);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: #e8e0ff;
+      padding-bottom: 40px;
+    }
+    header {
+      background: linear-gradient(90deg, #4a00e0 0%, #8e2de2 50%, #00b4d8 100%);
+      padding: 28px 20px 20px;
+      text-align: center;
+      box-shadow: 0 4px 24px rgba(142,45,226,0.4);
+    }
+    .subtitle { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; opacity: 0.75; margin-bottom: 4px; }
+    h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 2px 12px rgba(0,180,216,0.5); margin-bottom: 6px; }
+    .tagline { font-size: 13px; opacity: 0.8; }
+    main { padding: 20px 16px 0; }
+    .progress-box {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(142,45,226,0.25);
+    }
+    .progress-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+    .progress-row span:first-child { font-weight: 600; }
+    .progress-count { font-weight: 700; color: #7df9ff; }
+    .progress-track { background: rgba(255,255,255,0.12); border-radius: 99px; height: 10px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #4a00e0, #7df9ff); border-radius: 99px; transition: width 0.3s ease; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    #search {
+      flex: 1 1 160px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(142,45,226,0.3);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: #e8e0ff;
+      font-size: 14px;
+      outline: none;
+    }
+    #search::placeholder { color: rgba(232,224,255,0.4); }
+    .filter-btn {
+      padding: 9px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(142,45,226,0.35);
+      background: rgba(255,255,255,0.07);
+      color: #b0a8d8;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filter-btn.active { background: rgba(142,45,226,0.5); color: #fff; font-weight: 700; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 7px;
+    }
+    .poke-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+      opacity: 0.7;
+      color: #e8e0ff;
+      width: 100%;
+    }
+    .poke-btn.caught {
+      border-color: rgba(125,249,255,0.5);
+      background: rgba(74,0,224,0.35);
+      opacity: 1;
+    }
+    .checkbox {
+      width: 18px; height: 18px;
+      border-radius: 4px;
+      border: 2px solid rgba(255,255,255,0.3);
+      background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 11px;
+      color: #7df9ff;
+      transition: all 0.15s;
+    }
+    .poke-btn.caught .checkbox {
+      border-color: #7df9ff;
+      background: rgba(125,249,255,0.25);
+    }
+    .poke-num { font-size: 10px; opacity: 0.5; letter-spacing: 0.5px; line-height: 1; }
+    .poke-name { font-size: 13px; color: #b0a8d8; line-height: 1.3; margin-top: 2px; }
+    .poke-btn.caught .poke-name { color: #e8e0ff; font-weight: 600; }
+    .empty { text-align: center; padding: 40px 0; opacity: 0.5; font-size: 15px; }
+    .complete {
+      margin-top: 24px; text-align: center; padding: 20px; border-radius: 12px;
+      background: linear-gradient(135deg, rgba(74,0,224,0.4), rgba(0,180,216,0.2));
+      border: 1px solid rgba(125,249,255,0.4);
+      font-size: 16px; font-weight: 700; color: #7df9ff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="subtitle">Pokémon Legends: Z-A · Mega Dimension DLC</div>
+    <h1>Hyperspace Pokédex Tracker</h1>
+    <div class="tagline">132 Pokémon · Mega Dimension DLC (Dec 2025)</div>
+  </header>
+  <main>
+    <div class="progress-box">
+      <div class="progress-row">
+        <span>Progress</span>
+        <span class="progress-count" id="progress-text">0 / 132 caught (0%)</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="controls">
+      <input type="text" id="search" placeholder="Search Pokémon…">
+      <button class="filter-btn active" data-filter="all" id="btn-all">All (132)</button>
+      <button class="filter-btn" data-filter="needed" id="btn-needed">Needed (132)</button>
+      <button class="filter-btn" data-filter="caught" id="btn-caught">Caught (0)</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" style="display:none">No Pokémon match that filter.</div>
+    <div class="complete" id="complete" style="display:none">🎉 Hyperspace Pokédex Complete!</div>
+  </main>
+
+  <script>
+    const POKEMON = [
+      {id:1,name:"Mankey"},{id:2,name:"Primeape"},{id:3,name:"Annihilape"},
+      {id:4,name:"Meowth"},{id:5,name:"Persian"},{id:6,name:"Perrserker"},
+      {id:7,name:"Farfetch'd"},{id:8,name:"Sirfetch'd"},{id:9,name:"Cubone"},
+      {id:10,name:"Marowak"},{id:11,name:"Porygon"},{id:12,name:"Porygon2"},{id:13,name:"Porygon-Z"},
+      {id:14,name:"Capsakid"},{id:15,name:"Scovillain"},{id:16,name:"Tinkatink"},
+      {id:17,name:"Tinkatuff"},{id:18,name:"Tinkaton"},{id:19,name:"Cyclizar"},
+      {id:20,name:"Glimmet"},{id:21,name:"Glimmora"},
+      {id:22,name:"Rotom"},{id:23,name:"Greavard"},{id:24,name:"Houndstone"},
+      {id:25,name:"Sandygast"},{id:26,name:"Palossand"},{id:27,name:"Kecleon"},
+      {id:28,name:"Flamigo"},{id:29,name:"Cryogonal"},{id:30,name:"Dondozo"},{id:31,name:"Tatsugiri"},
+      {id:32,name:"Frigibax"},{id:33,name:"Arctibax"},{id:34,name:"Baxcalibur"},
+      {id:35,name:"Gimmighoul"},{id:36,name:"Gholdengo"},
+      {id:37,name:"Qwilfish"},{id:38,name:"Overqwil"},
+      {id:39,name:"Treecko"},{id:40,name:"Grovyle"},{id:41,name:"Sceptile"},
+      {id:42,name:"Torchic"},{id:43,name:"Combusken"},{id:44,name:"Blaziken"},
+      {id:45,name:"Mudkip"},{id:46,name:"Marshtomp"},{id:47,name:"Swampert"},
+      {id:48,name:"Feebas"},{id:49,name:"Milotic"},{id:50,name:"Chingling"},
+      {id:51,name:"Chimecho"},{id:52,name:"Indeedee"},{id:53,name:"Purrloin"},
+      {id:54,name:"Liepard"},{id:55,name:"Munna"},{id:56,name:"Musharna"},
+      {id:57,name:"Throh"},{id:58,name:"Sawk"},{id:59,name:"Yamask"},
+      {id:60,name:"Cofagrigus"},{id:61,name:"Runerigus"},
+      {id:62,name:"Wimpod"},{id:63,name:"Golisopod"},
+      {id:64,name:"Nickit"},{id:65,name:"Thievul"},
+      {id:66,name:"Clobbopus"},{id:67,name:"Grapploct"},
+      {id:68,name:"Mimikyu"},{id:69,name:"Kleavor"},{id:70,name:"Morpeko"},
+      {id:71,name:"Golett"},{id:72,name:"Golurk"},
+      {id:73,name:"Rookidee"},{id:74,name:"Corvisquire"},{id:75,name:"Corviknight"},
+      {id:76,name:"Igglybuff"},{id:77,name:"Jigglypuff"},{id:78,name:"Wigglytuff"},
+      {id:79,name:"Fidough"},{id:80,name:"Dachsbun"},
+      {id:81,name:"Starly"},{id:82,name:"Staravia"},{id:83,name:"Staraptor"},
+      {id:84,name:"Spoink"},{id:85,name:"Grumpig"},
+      {id:86,name:"Squawkabilly"},
+      {id:87,name:"Crabrawler"},{id:88,name:"Crabominable"},
+      {id:89,name:"Nacli"},{id:90,name:"Naclstack"},{id:91,name:"Garganacl"},
+      {id:92,name:"Gulpin"},{id:93,name:"Swalot"},
+      {id:94,name:"Zubat"},{id:95,name:"Golbat"},{id:96,name:"Crobat"},
+      {id:97,name:"Charcadet"},{id:98,name:"Armarouge"},{id:99,name:"Ceruledge"},
+      {id:100,name:"Maschiff"},{id:101,name:"Mabosstiff"},
+      {id:102,name:"Toxel"},{id:103,name:"Toxtricity"},
+      {id:104,name:"Shroodle"},{id:105,name:"Grafaiai"},
+      {id:106,name:"Zangoose"},{id:107,name:"Seviper"},
+      {id:108,name:"Mime Jr."},{id:109,name:"Mr. Mime"},{id:110,name:"Mr. Rime"},
+      {id:111,name:"Foongus"},{id:112,name:"Amoonguss"},
+      {id:113,name:"Heatran"},{id:114,name:"Volcanion"},
+      {id:115,name:"Cobalion"},{id:116,name:"Terrakion"},{id:117,name:"Virizion"},
+      {id:118,name:"Keldeo"},{id:119,name:"Meloetta"},{id:120,name:"Genesect"},
+      {id:121,name:"Hoopa"},{id:122,name:"Marshadow"},
+      {id:123,name:"Meltan"},{id:124,name:"Melmetal"},
+      {id:125,name:"Darkrai"},
+      {id:126,name:"Latias"},{id:127,name:"Latios"},
+      {id:128,name:"Kyogre"},{id:129,name:"Groudon"},{id:130,name:"Rayquaza"},
+      {id:131,name:"Magearna"},{id:132,name:"Zeraora"},
+    ];
+
+    const STORAGE_KEY = "za-dlc-caught";
+    const total = POKEMON.length;
+    let caught = new Set();
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) caught = new Set(JSON.parse(saved));
+    } catch {}
+
+    let filter = "all";
+    let search = "";
+
+    function save() {
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...caught])); } catch {}
+    }
+
+    function pad(n) { return String(n).padStart(3, "0"); }
+
+    function updateProgress() {
+      const n = caught.size;
+      const pct = Math.round((n / total) * 100);
+      document.getElementById("progress-text").textContent = `${n} / ${total} caught (${pct}%)`;
+      document.getElementById("progress-fill").style.width = pct + "%";
+      document.getElementById("btn-all").textContent = `All (${total})`;
+      document.getElementById("btn-needed").textContent = `Needed (${total - n})`;
+      document.getElementById("btn-caught").textContent = `Caught (${n})`;
+      document.getElementById("complete").style.display = n === total ? "block" : "none";
+    }
+
+    function render() {
+      const grid = document.getElementById("grid");
+      const q = search.toLowerCase();
+      const visible = POKEMON.filter(p => {
+        const ms = p.name.toLowerCase().includes(q);
+        const mf = filter === "all" || (filter === "caught" && caught.has(p.id)) || (filter === "needed" && !caught.has(p.id));
+        return ms && mf;
+      });
+      document.getElementById("empty").style.display = visible.length === 0 ? "block" : "none";
+      grid.innerHTML = "";
+      visible.forEach(p => {
+        const isCaught = caught.has(p.id);
+        const btn = document.createElement("button");
+        btn.className = "poke-btn" + (isCaught ? " caught" : "");
+        btn.innerHTML = `
+          <div class="checkbox">${isCaught ? "✓" : ""}</div>
+          <div>
+            <div class="poke-num">#${pad(p.id)}</div>
+            <div class="poke-name">${p.name}</div>
+          </div>`;
+        btn.addEventListener("click", () => {
+          if (caught.has(p.id)) caught.delete(p.id);
+          else caught.add(p.id);
+          save();
+          updateProgress();
+          render();
+        });
+        grid.appendChild(btn);
+      });
+      updateProgress();
+    }
+
+    document.getElementById("search").addEventListener("input", e => {
+      search = e.target.value;
+      render();
+    });
+
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        filter = btn.dataset.filter;
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        render();
+      });
+    });
+
+    render();
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
