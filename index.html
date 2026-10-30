@@ -104,6 +104,14 @@
       border-color: #7df9ff;
       background: rgba(125,249,255,0.25);
     }
+
+    .type-box { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; border: 1px solid rgba(142,45,226,0.25); }
+    .type-head { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; opacity: 0.8; }
+    .type-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .type-chip { display: flex; align-items: center; gap: 6px; padding: 4px 9px 4px 4px; border-radius: 99px; background: rgba(255,255,255,0.07); font-size: 12px; }
+    .type-chip .tn { font-weight: 700; min-width: 22px; text-align: center; padding: 2px 6px; border-radius: 99px; color: #fff; font-size: 12px; }
+    .type-tags { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
+    .type-tag { font-size: 9px; padding: 1px 5px; border-radius: 3px; color: #fff; opacity: 0.9; }
     .poke-num { font-size: 10px; opacity: 0.5; letter-spacing: 0.5px; line-height: 1; }
     .poke-name { font-size: 13px; color: #b0a8d8; line-height: 1.3; margin-top: 2px; }
     .poke-btn.caught .poke-name { color: #e8e0ff; font-weight: 600; }
@@ -135,6 +143,10 @@
       <button class="filter-btn active" data-filter="all" id="btn-all">All (132)</button>
       <button class="filter-btn" data-filter="needed" id="btn-needed">Needed (132)</button>
       <button class="filter-btn" data-filter="caught" id="btn-caught">Caught (0)</button>
+    </div>
+    <div class="type-box">
+      <div class="type-head"><span id="type-title">Types in view</span><span id="type-count"></span></div>
+      <div class="type-chips" id="type-chips"></div>
     </div>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" style="display:none">No Pokémon match that filter.</div>
@@ -197,6 +209,59 @@
       {id:131,name:"Magearna"},{id:132,name:"Zeraora"},
     ];
 
+    // Types by name (IDs and saved progress are untouched)
+    const TYPES = {
+      "Mankey":["Fighting"],"Primeape":["Fighting"],"Annihilape":["Fighting","Ghost"],
+      "Meowth":["Normal"],"Persian":["Normal"],"Perrserker":["Steel"],
+      "Farfetch'd":["Normal","Flying"],"Sirfetch'd":["Fighting"],"Cubone":["Ground"],
+      "Marowak":["Ground"],"Porygon":["Normal"],"Porygon2":["Normal"],"Porygon-Z":["Normal"],
+      "Capsakid":["Grass"],"Scovillain":["Grass","Fire"],"Tinkatink":["Fairy","Steel"],
+      "Tinkatuff":["Fairy","Steel"],"Tinkaton":["Fairy","Steel"],"Cyclizar":["Dragon","Normal"],
+      "Glimmet":["Rock","Poison"],"Glimmora":["Rock","Poison"],"Rotom":["Electric","Ghost"],
+      "Greavard":["Ghost"],"Houndstone":["Ghost"],"Sandygast":["Ghost","Ground"],
+      "Palossand":["Ghost","Ground"],"Kecleon":["Normal"],"Flamigo":["Flying","Fighting"],
+      "Cryogonal":["Ice"],"Dondozo":["Water"],"Tatsugiri":["Dragon","Water"],
+      "Frigibax":["Dragon","Ice"],"Arctibax":["Dragon","Ice"],"Baxcalibur":["Dragon","Ice"],
+      "Gimmighoul":["Ghost"],"Gholdengo":["Steel","Ghost"],"Qwilfish":["Water","Poison"],
+      "Overqwil":["Dark","Poison"],"Treecko":["Grass"],"Grovyle":["Grass"],"Sceptile":["Grass"],
+      "Torchic":["Fire"],"Combusken":["Fire","Fighting"],"Blaziken":["Fire","Fighting"],
+      "Mudkip":["Water"],"Marshtomp":["Water","Ground"],"Swampert":["Water","Ground"],
+      "Feebas":["Water"],"Milotic":["Water"],"Chingling":["Psychic"],"Chimecho":["Psychic"],
+      "Indeedee":["Psychic","Normal"],"Purrloin":["Dark"],"Liepard":["Dark"],
+      "Munna":["Psychic"],"Musharna":["Psychic"],"Throh":["Fighting"],"Sawk":["Fighting"],
+      "Yamask":["Ghost"],"Cofagrigus":["Ghost"],"Runerigus":["Ground","Ghost"],
+      "Wimpod":["Bug","Water"],"Golisopod":["Bug","Water"],"Nickit":["Dark"],"Thievul":["Dark"],
+      "Clobbopus":["Fighting"],"Grapploct":["Fighting"],"Mimikyu":["Ghost","Fairy"],
+      "Kleavor":["Bug","Rock"],"Morpeko":["Electric","Dark"],"Golett":["Ground","Ghost"],
+      "Golurk":["Ground","Ghost"],"Rookidee":["Flying"],"Corvisquire":["Flying"],
+      "Corviknight":["Flying","Steel"],"Igglybuff":["Normal","Fairy"],"Jigglypuff":["Normal","Fairy"],
+      "Wigglytuff":["Normal","Fairy"],"Fidough":["Fairy"],"Dachsbun":["Fairy"],
+      "Starly":["Normal","Flying"],"Staravia":["Normal","Flying"],"Staraptor":["Normal","Flying"],
+      "Spoink":["Psychic"],"Grumpig":["Psychic"],"Squawkabilly":["Normal","Flying"],
+      "Crabrawler":["Fighting"],"Crabominable":["Fighting","Ice"],"Nacli":["Rock"],
+      "Naclstack":["Rock"],"Garganacl":["Rock"],"Gulpin":["Poison"],"Swalot":["Poison"],
+      "Zubat":["Poison","Flying"],"Golbat":["Poison","Flying"],"Crobat":["Poison","Flying"],
+      "Charcadet":["Fire"],"Armarouge":["Fire","Psychic"],"Ceruledge":["Fire","Ghost"],
+      "Maschiff":["Dark"],"Mabosstiff":["Dark"],"Toxel":["Electric","Poison"],
+      "Toxtricity":["Electric","Poison"],"Shroodle":["Poison","Normal"],"Grafaiai":["Poison","Normal"],
+      "Zangoose":["Normal"],"Seviper":["Poison"],"Mime Jr.":["Psychic","Fairy"],
+      "Mr. Mime":["Psychic","Fairy"],"Mr. Rime":["Ice","Psychic"],"Foongus":["Grass","Poison"],
+      "Amoonguss":["Grass","Poison"],"Heatran":["Fire","Steel"],"Volcanion":["Fire","Water"],
+      "Cobalion":["Steel","Fighting"],"Terrakion":["Rock","Fighting"],"Virizion":["Grass","Fighting"],
+      "Keldeo":["Water","Fighting"],"Meloetta":["Normal","Psychic"],"Genesect":["Bug","Steel"],
+      "Hoopa":["Psychic","Ghost"],"Marshadow":["Fighting","Ghost"],"Meltan":["Steel"],
+      "Melmetal":["Steel"],"Darkrai":["Dark"],"Latias":["Dragon","Psychic"],
+      "Latios":["Dragon","Psychic"],"Kyogre":["Water"],"Groudon":["Ground"],
+      "Rayquaza":["Dragon","Flying"],"Magearna":["Steel","Fairy"],"Zeraora":["Electric"]
+    };
+    const TYPE_COLOURS = {
+      Normal:"#8a8a6a",Fire:"#e8622c",Water:"#3f7be0",Electric:"#d4a90f",Grass:"#4ea53a",
+      Ice:"#4fb8b8",Fighting:"#b0302a",Poison:"#8a3a9a",Ground:"#b8963f",Flying:"#7a6fd0",
+      Psychic:"#e0457a",Bug:"#8a9a14",Rock:"#8a7a2a",Ghost:"#5a4580",Dragon:"#5a2ae0",
+      Dark:"#5a4838",Steel:"#7a7a90",Fairy:"#d070a0"
+    };
+    const typesOf = name => TYPES[name] || [];
+
     const STORAGE_KEY = "za-dlc-caught";
     const total = POKEMON.length;
     let caught = new Set();
@@ -225,6 +290,18 @@
       document.getElementById("complete").style.display = n === total ? "block" : "none";
     }
 
+    function renderTypeCounts(visible) {
+      const counts = {};
+      visible.forEach(p => typesOf(p.name).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+      const rows = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      const label = filter === "needed" ? "Types still needed" : filter === "caught" ? "Types caught" : "Types in view";
+      document.getElementById("type-title").textContent = label;
+      document.getElementById("type-count").textContent = `${visible.length} Pokémon (dual types count twice)`;
+      document.getElementById("type-chips").innerHTML = rows.length
+        ? rows.map(([t, n]) => `<div class="type-chip"><span class="tn" style="background:${TYPE_COLOURS[t]}">${n}</span>${t}</div>`).join("")
+        : '<span style="opacity:.5;font-size:12px">Nothing to show</span>';
+    }
+
     function render() {
       const grid = document.getElementById("grid");
       const q = search.toLowerCase();
@@ -234,6 +311,7 @@
         return ms && mf;
       });
       document.getElementById("empty").style.display = visible.length === 0 ? "block" : "none";
+      renderTypeCounts(visible);
       grid.innerHTML = "";
       visible.forEach(p => {
         const isCaught = caught.has(p.id);
@@ -244,6 +322,7 @@
           <div>
             <div class="poke-num">#${pad(p.id)}</div>
             <div class="poke-name">${p.name}</div>
+            <div class="type-tags">${typesOf(p.name).map(t => `<span class="type-tag" style="background:${TYPE_COLOURS[t]}">${t}</span>`).join("")}</div>
           </div>`;
         btn.addEventListener("click", () => {
           if (caught.has(p.id)) caught.delete(p.id);
