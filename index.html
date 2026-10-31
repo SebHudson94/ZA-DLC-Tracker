@@ -124,6 +124,10 @@
     .type-tag { font-size: 9px; padding: 1px 5px; border-radius: 3px; color: #fff; opacity: 0.9; }
     .legend-btn { padding: 9px 14px; border-radius: 8px; border: 1px solid rgba(142,45,226,0.35); background: rgba(255,255,255,0.07); color: #b0a8d8; font-size: 13px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
     .legend-btn.on { background: rgba(224,69,122,0.35); border-color: rgba(224,69,122,0.7); color: #fff; font-weight: 700; }
+    .io-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .io-btn { flex: 1; padding: 9px; border-radius: 8px; border: 1px solid rgba(142,45,226,0.35); background: rgba(255,255,255,0.07); color: #b0a8d8; font-size: 12px; cursor: pointer; font-family: inherit; }
+    .io-btn:active { background: rgba(142,45,226,0.4); }
+    .io-note { font-size: 10px; opacity: 0.5; margin-bottom: 14px; line-height: 1.4; }
     .poke-num { font-size: 10px; opacity: 0.5; letter-spacing: 0.5px; line-height: 1; }
     .poke-name { font-size: 13px; color: #b0a8d8; line-height: 1.3; margin-top: 2px; }
     .poke-btn.caught .poke-name { color: #e8e0ff; font-weight: 600; }
@@ -150,6 +154,12 @@
       </div>
       <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
     </div>
+    <div class="io-row">
+      <button class="io-btn" id="za-export">📤 Export ticks</button>
+      <button class="io-btn" id="za-import">📥 Import (adds only)</button>
+      <input type="file" id="za-file" accept=".json,application/json" style="display:none">
+    </div>
+    <div class="io-note">Import only ever adds ticks. It never removes or changes the ones you already have.</div>
     <div class="controls">
       <input type="text" id="search" placeholder="Search Pokémon…">
       <button class="filter-btn active" data-filter="all" id="btn-all">All (132)</button>
@@ -410,6 +420,44 @@
       typePanelCollapsed = !typePanelCollapsed;
       typeBox.classList.toggle("collapsed", typePanelCollapsed);
       try { localStorage.setItem(UI_KEY, JSON.stringify({ typeCollapsed: typePanelCollapsed })); } catch {}
+    });
+
+    // ── Export / import (merge only: can never remove existing ticks) ──
+    function todayISO() {
+      const d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+    document.getElementById("za-export").addEventListener("click", () => {
+      const payload = { app: "za-hyperspace-dex", version: 1, exported: new Date().toISOString(), caught: [...caught].sort((a, b) => a - b) };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "za-dex-progress-" + todayISO() + ".json";
+      a.click();
+    });
+    document.getElementById("za-import").addEventListener("click", () => document.getElementById("za-file").click());
+    document.getElementById("za-file").addEventListener("change", e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          const raw = Array.isArray(parsed) ? parsed : parsed.caught;
+          if (!Array.isArray(raw)) throw new Error("bad");
+          const ids = [...new Set(raw.map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= total))];
+          const added = ids.filter(id => !caught.has(id));
+          if (!ids.length) { alert("That file has no ticked Pokémon in it. Nothing was changed."); return; }
+          if (!added.length) { alert("Nothing new to add: everything ticked in that file is already ticked here. Your progress is unchanged."); return; }
+          if (!confirm(`Add ${added.length} newly ticked Pokémon from the file?\n\nYour ${caught.size} current ticks stay ticked. Import only adds, it never removes.`)) return;
+          added.forEach(id => caught.add(id));
+          save();
+          updateProgress();
+          render();
+        } catch { alert("Couldn't read that file. Make sure it's an export from this app."); }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
     });
 
     render();
