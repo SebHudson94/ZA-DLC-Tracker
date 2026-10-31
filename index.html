@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="ZA DLC Tracker">
-  <title>Hyperspace Pokédex Tracker</title>
+  <title>Z-A Pokédex Tracker</title>
   <link rel="manifest" href="manifest.json">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -136,6 +136,10 @@
     .sprite.broken { visibility: hidden; }
     .type-ico { height: 11px; width: auto; vertical-align: -1px; margin-right: 3px; }
     .type-ico.broken { display: none; }
+    .dex-row { display: flex; gap: 8px; margin-bottom: 10px; }
+    .dex-btn { flex: 1; padding: 9px 6px; border-radius: 8px; border: 1px solid rgba(125,249,255,0.3); background: rgba(255,255,255,0.06); color: #b0a8d8; font-size: 12px; cursor: pointer; font-family: inherit; }
+    .dex-btn.active { background: rgba(0,180,216,0.3); border-color: #7df9ff; color: #fff; font-weight: 700; }
+    .dex-head { grid-column: 1 / -1; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.75; padding: 10px 2px 2px; color: #7df9ff; }
     .poke-num { font-size: 10px; opacity: 0.5; letter-spacing: 0.5px; line-height: 1; }
     .poke-name { font-size: 13px; color: #b0a8d8; line-height: 1.3; margin-top: 2px; }
     .poke-btn.caught .poke-name { color: #e8e0ff; font-weight: 600; }
@@ -150,15 +154,15 @@
 </head>
 <body>
   <header>
-    <div class="subtitle">Pokémon Legends: Z-A · Mega Dimension DLC</div>
-    <h1>Hyperspace Pokédex Tracker</h1>
-    <div class="tagline">132 Pokémon · Mega Dimension DLC (Dec 2025)</div>
+    <div class="subtitle">Pokémon Legends: Z-A · Lumiose + Mega Dimension</div>
+    <h1>Z-A Pokédex Tracker</h1>
+    <div class="tagline">362 Pokémon · 230 Lumiose + 132 Hyperspace</div>
   </header>
   <main>
     <div class="progress-box">
       <div class="progress-row">
         <span>Progress</span>
-        <span class="progress-count" id="progress-text">0 / 132 caught (0%)</span>
+        <span class="progress-count" id="progress-text">0 / 362 caught (0%)</span>
       </div>
       <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
     </div>
@@ -168,10 +172,15 @@
       <input type="file" id="za-file" accept=".json,application/json" style="display:none">
     </div>
     <div class="io-note">Import only ever adds ticks. It never removes or changes the ones you already have.</div>
+    <div class="dex-row">
+      <button class="dex-btn active" data-dex="all" id="dex-all">Both</button>
+      <button class="dex-btn" data-dex="L" id="dex-L">Lumiose</button>
+      <button class="dex-btn" data-dex="H" id="dex-H">Hyperspace</button>
+    </div>
     <div class="controls">
       <input type="text" id="search" placeholder="Search Pokémon…">
-      <button class="filter-btn active" data-filter="all" id="btn-all">All (132)</button>
-      <button class="filter-btn" data-filter="needed" id="btn-needed">Needed (132)</button>
+      <button class="filter-btn active" data-filter="all" id="btn-all">All (362)</button>
+      <button class="filter-btn" data-filter="needed" id="btn-needed">Needed (362)</button>
       <button class="filter-btn" data-filter="caught" id="btn-caught">Caught (0)</button>
       <button class="legend-btn" id="btn-legend">Hide legendaries: Off</button>
       <button class="legend-btn" id="btn-imgs">Images: On</button>
@@ -182,11 +191,11 @@
     </div>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" style="display:none">No Pokémon match that filter.</div>
-    <div class="complete" id="complete" style="display:none">🎉 Hyperspace Pokédex Complete!</div>
+    <div class="complete" id="complete" style="display:none">🎉 Z-A Pokédex Complete!</div>
   </main>
 
   <script>
-    const POKEMON = [
+    const HYPERSPACE = [
       {id:1,name:"Mankey"},{id:2,name:"Primeape"},{id:3,name:"Annihilape"},
       {id:4,name:"Meowth"},{id:5,name:"Persian"},{id:6,name:"Perrserker"},
       {id:7,name:"Farfetch'd"},{id:8,name:"Sirfetch'd"},{id:9,name:"Cubone"},
@@ -240,6 +249,14 @@
       {id:128,name:"Kyogre"},{id:129,name:"Groudon"},{id:130,name:"Rayquaza"},
       {id:131,name:"Magearna"},{id:132,name:"Zeraora"},
     ];
+    // Full Z-A Pokédex: Lumiose (base game, ids 1001-1230) + Hyperspace (DLC, ids 1-132, unchanged so saved ticks carry over)
+    const LUMIOSE_NAMES = ["Chikorita","Bayleef","Meganium","Tepig","Pignite","Emboar","Totodile","Croconaw","Feraligatr","Fletchling","Fletchinder","Talonflame","Bunnelby","Diggersby","Scatterbug","Spewpa","Vivillon","Weedle","Kakuna","Beedrill","Pidgey","Pidgeotto","Pidgeot","Mareep","Flaaffy","Ampharos","Patrat","Watchog","Budew","Roselia","Roserade","Magikarp","Gyarados","Binacle","Barbaracle","Staryu","Starmie","Flabébé","Floette","Florges","Skiddo","Gogoat","Espurr","Meowstic","Litleo","Pyroar","Pancham","Pangoro","Trubbish","Garbodor","Dedenne","Pichu","Pikachu","Raichu","Cleffa","Clefairy","Clefable","Spinarak","Ariados","Ekans","Arbok","Abra","Kadabra","Alakazam","Gastly","Haunter","Gengar","Venipede","Whirlipede","Scolipede","Honedge","Doublade","Aegislash","Bellsprout","Weepinbell","Victreebel","Pansage","Simisage","Pansear","Simisear","Panpour","Simipour","Meditite","Medicham","Electrike","Manectric","Ralts","Kirlia","Gardevoir","Gallade","Houndour","Houndoom","Swablu","Altaria","Audino","Spritzee","Aromatisse","Swirlix","Slurpuff","Eevee","Vaporeon","Jolteon","Flareon","Espeon","Umbreon","Leafeon","Glaceon","Sylveon","Buneary","Lopunny","Shuppet","Banette","Vanillite","Vanillish","Vanilluxe","Numel","Camerupt","Hippopotas","Hippowdon","Drilbur","Excadrill","Sandile","Krokorok","Krookodile","Machop","Machoke","Machamp","Gible","Gabite","Garchomp","Carbink","Sableye","Mawile","Absol","Riolu","Lucario","Slowpoke","Slowbro","Slowking","Carvanha","Sharpedo","Tynamo","Eelektrik","Eelektross","Dratini","Dragonair","Dragonite","Bulbasaur","Ivysaur","Venusaur","Charmander","Charmeleon","Charizard","Squirtle","Wartortle","Blastoise","Stunfisk","Furfrou","Inkay","Malamar","Skrelp","Dragalge","Clauncher","Clawitzer","Goomy","Sliggoo","Goodra","Delibird","Snorunt","Glalie","Froslass","Snover","Abomasnow","Bergmite","Avalugg","Scyther","Scizor","Pinsir","Heracross","Emolga","Hawlucha","Phantump","Trevenant","Scraggy","Scrafty","Noibat","Noivern","Klefki","Litwick","Lampent","Chandelure","Aerodactyl","Tyrunt","Tyrantrum","Amaura","Aurorus","Onix","Steelix","Aron","Lairon","Aggron","Helioptile","Heliolisk","Pumpkaboo","Gourgeist","Larvitar","Pupitar","Tyranitar","Froakie","Frogadier","Greninja","Falinks","Chespin","Quilladin","Chesnaught","Skarmory","Fennekin","Braixen","Delphox","Bagon","Shelgon","Salamence","Kangaskhan","Drampa","Beldum","Metang","Metagross","Xerneas","Yveltal","Zygarde"];
+    const POKEMON = [
+      ...LUMIOSE_NAMES.map((name, i) => ({ id: 1001 + i, name, dex: "L", num: i + 1 })),
+      ...HYPERSPACE.map(p => ({ id: p.id, name: p.name, dex: "H", num: p.id })),
+    ];
+    const VALID_IDS = new Set(POKEMON.map(p => p.id));
+    const dexLabel = p => p.dex + String(p.num).padStart(3, "0");
 
     // Types by name (IDs and saved progress are untouched)
     const TYPES = {
@@ -324,11 +341,16 @@
       if (c && (c.contains("sprite") || c.contains("type-ico"))) c.add("broken");
     }, true);
 
+    Object.assign(TYPES, {"Chikorita":["Grass"],"Bayleef":["Grass"],"Meganium":["Grass"],"Tepig":["Fire"],"Pignite":["Fire","Fighting"],"Emboar":["Fire","Fighting"],"Totodile":["Water"],"Croconaw":["Water"],"Feraligatr":["Water"],"Fletchling":["Normal","Flying"],"Fletchinder":["Fire","Flying"],"Talonflame":["Fire","Flying"],"Bunnelby":["Normal"],"Diggersby":["Normal","Ground"],"Scatterbug":["Bug"],"Spewpa":["Bug"],"Vivillon":["Bug","Flying"],"Weedle":["Bug","Poison"],"Kakuna":["Bug","Poison"],"Beedrill":["Bug","Poison"],"Pidgey":["Normal","Flying"],"Pidgeotto":["Normal","Flying"],"Pidgeot":["Normal","Flying"],"Mareep":["Electric"],"Flaaffy":["Electric"],"Ampharos":["Electric"],"Patrat":["Normal"],"Watchog":["Normal"],"Budew":["Grass","Poison"],"Roselia":["Grass","Poison"],"Roserade":["Grass","Poison"],"Magikarp":["Water"],"Gyarados":["Water","Flying"],"Binacle":["Rock","Water"],"Barbaracle":["Rock","Water"],"Staryu":["Water"],"Starmie":["Water","Psychic"],"Flabébé":["Fairy"],"Floette":["Fairy"],"Florges":["Fairy"],"Skiddo":["Grass"],"Gogoat":["Grass"],"Espurr":["Psychic"],"Meowstic":["Psychic"],"Litleo":["Fire","Normal"],"Pyroar":["Fire","Normal"],"Pancham":["Fighting"],"Pangoro":["Fighting","Dark"],"Trubbish":["Poison"],"Garbodor":["Poison"],"Dedenne":["Electric","Fairy"],"Pichu":["Electric"],"Pikachu":["Electric"],"Raichu":["Electric"],"Cleffa":["Fairy"],"Clefairy":["Fairy"],"Clefable":["Fairy"],"Spinarak":["Bug","Poison"],"Ariados":["Bug","Poison"],"Ekans":["Poison"],"Arbok":["Poison"],"Abra":["Psychic"],"Kadabra":["Psychic"],"Alakazam":["Psychic"],"Gastly":["Ghost","Poison"],"Haunter":["Ghost","Poison"],"Gengar":["Ghost","Poison"],"Venipede":["Bug","Poison"],"Whirlipede":["Bug","Poison"],"Scolipede":["Bug","Poison"],"Honedge":["Steel","Ghost"],"Doublade":["Steel","Ghost"],"Aegislash":["Steel","Ghost"],"Bellsprout":["Grass","Poison"],"Weepinbell":["Grass","Poison"],"Victreebel":["Grass","Poison"],"Pansage":["Grass"],"Simisage":["Grass"],"Pansear":["Fire"],"Simisear":["Fire"],"Panpour":["Water"],"Simipour":["Water"],"Meditite":["Fighting","Psychic"],"Medicham":["Fighting","Psychic"],"Electrike":["Electric"],"Manectric":["Electric"],"Ralts":["Psychic","Fairy"],"Kirlia":["Psychic","Fairy"],"Gardevoir":["Psychic","Fairy"],"Gallade":["Psychic","Fighting"],"Houndour":["Dark","Fire"],"Houndoom":["Dark","Fire"],"Swablu":["Normal","Flying"],"Altaria":["Dragon","Flying"],"Audino":["Normal"],"Spritzee":["Fairy"],"Aromatisse":["Fairy"],"Swirlix":["Fairy"],"Slurpuff":["Fairy"],"Eevee":["Normal"],"Vaporeon":["Water"],"Jolteon":["Electric"],"Flareon":["Fire"],"Espeon":["Psychic"],"Umbreon":["Dark"],"Leafeon":["Grass"],"Glaceon":["Ice"],"Sylveon":["Fairy"],"Buneary":["Normal"],"Lopunny":["Normal"],"Shuppet":["Ghost"],"Banette":["Ghost"],"Vanillite":["Ice"],"Vanillish":["Ice"],"Vanilluxe":["Ice"],"Numel":["Fire","Ground"],"Camerupt":["Fire","Ground"],"Hippopotas":["Ground"],"Hippowdon":["Ground"],"Drilbur":["Ground"],"Excadrill":["Ground","Steel"],"Sandile":["Ground","Dark"],"Krokorok":["Ground","Dark"],"Krookodile":["Ground","Dark"],"Machop":["Fighting"],"Machoke":["Fighting"],"Machamp":["Fighting"],"Gible":["Dragon","Ground"],"Gabite":["Dragon","Ground"],"Garchomp":["Dragon","Ground"],"Carbink":["Rock","Fairy"],"Sableye":["Dark","Ghost"],"Mawile":["Steel","Fairy"],"Absol":["Dark"],"Riolu":["Fighting"],"Lucario":["Fighting","Steel"],"Slowpoke":["Water","Psychic"],"Slowbro":["Water","Psychic"],"Slowking":["Water","Psychic"],"Carvanha":["Water","Dark"],"Sharpedo":["Water","Dark"],"Tynamo":["Electric"],"Eelektrik":["Electric"],"Eelektross":["Electric"],"Dratini":["Dragon"],"Dragonair":["Dragon"],"Dragonite":["Dragon","Flying"],"Bulbasaur":["Grass","Poison"],"Ivysaur":["Grass","Poison"],"Venusaur":["Grass","Poison"],"Charmander":["Fire"],"Charmeleon":["Fire"],"Charizard":["Fire","Flying"],"Squirtle":["Water"],"Wartortle":["Water"],"Blastoise":["Water"],"Stunfisk":["Ground","Electric"],"Furfrou":["Normal"],"Inkay":["Dark","Psychic"],"Malamar":["Dark","Psychic"],"Skrelp":["Poison","Water"],"Dragalge":["Poison","Dragon"],"Clauncher":["Water"],"Clawitzer":["Water"],"Goomy":["Dragon"],"Sliggoo":["Dragon"],"Goodra":["Dragon"],"Delibird":["Ice","Flying"],"Snorunt":["Ice"],"Glalie":["Ice"],"Froslass":["Ice","Ghost"],"Snover":["Grass","Ice"],"Abomasnow":["Grass","Ice"],"Bergmite":["Ice"],"Avalugg":["Ice"],"Scyther":["Bug","Flying"],"Scizor":["Bug","Steel"],"Pinsir":["Bug"],"Heracross":["Bug","Fighting"],"Emolga":["Electric","Flying"],"Hawlucha":["Fighting","Flying"],"Phantump":["Ghost","Grass"],"Trevenant":["Ghost","Grass"],"Scraggy":["Dark","Fighting"],"Scrafty":["Dark","Fighting"],"Noibat":["Flying","Dragon"],"Noivern":["Flying","Dragon"],"Klefki":["Steel","Fairy"],"Litwick":["Ghost","Fire"],"Lampent":["Ghost","Fire"],"Chandelure":["Ghost","Fire"],"Aerodactyl":["Rock","Flying"],"Tyrunt":["Rock","Dragon"],"Tyrantrum":["Rock","Dragon"],"Amaura":["Rock","Ice"],"Aurorus":["Rock","Ice"],"Onix":["Rock","Ground"],"Steelix":["Steel","Ground"],"Aron":["Steel","Rock"],"Lairon":["Steel","Rock"],"Aggron":["Steel","Rock"],"Helioptile":["Electric","Normal"],"Heliolisk":["Electric","Normal"],"Pumpkaboo":["Ghost","Grass"],"Gourgeist":["Ghost","Grass"],"Larvitar":["Rock","Ground"],"Pupitar":["Rock","Ground"],"Tyranitar":["Rock","Dark"],"Froakie":["Water"],"Frogadier":["Water"],"Greninja":["Water","Dark"],"Falinks":["Fighting"],"Chespin":["Grass"],"Quilladin":["Grass"],"Chesnaught":["Grass","Fighting"],"Skarmory":["Steel","Flying"],"Fennekin":["Fire"],"Braixen":["Fire"],"Delphox":["Fire","Psychic"],"Bagon":["Dragon"],"Shelgon":["Dragon"],"Salamence":["Dragon","Flying"],"Kangaskhan":["Normal"],"Drampa":["Normal","Dragon"],"Beldum":["Steel","Psychic"],"Metang":["Steel","Psychic"],"Metagross":["Steel","Psychic"],"Xerneas":["Fairy"],"Yveltal":["Dark","Flying"],"Zygarde":["Dragon","Ground"]});
+    Object.assign(NAT, {"Chikorita":"0152","Bayleef":"0153","Meganium":"0154","Tepig":"0498","Pignite":"0499","Emboar":"0500","Totodile":"0158","Croconaw":"0159","Feraligatr":"0160","Fletchling":"0661","Fletchinder":"0662","Talonflame":"0663","Bunnelby":"0659","Diggersby":"0660","Scatterbug":"0664","Spewpa":"0665","Vivillon":"0666","Weedle":"0013","Kakuna":"0014","Beedrill":"0015","Pidgey":"0016","Pidgeotto":"0017","Pidgeot":"0018","Mareep":"0179","Flaaffy":"0180","Ampharos":"0181","Patrat":"0504","Watchog":"0505","Budew":"0406","Roselia":"0315","Roserade":"0407","Magikarp":"0129","Gyarados":"0130","Binacle":"0688","Barbaracle":"0689","Staryu":"0120","Starmie":"0121","Flabébé":"0669","Floette":"0670","Florges":"0671","Skiddo":"0672","Gogoat":"0673","Espurr":"0677","Meowstic":"0678","Litleo":"0667","Pyroar":"0668","Pancham":"0674","Pangoro":"0675","Trubbish":"0568","Garbodor":"0569","Dedenne":"0702","Pichu":"0172","Pikachu":"0025","Raichu":"0026","Cleffa":"0173","Clefairy":"0035","Clefable":"0036","Spinarak":"0167","Ariados":"0168","Ekans":"0023","Arbok":"0024","Abra":"0063","Kadabra":"0064","Alakazam":"0065","Gastly":"0092","Haunter":"0093","Gengar":"0094","Venipede":"0543","Whirlipede":"0544","Scolipede":"0545","Honedge":"0679","Doublade":"0680","Aegislash":"0681","Bellsprout":"0069","Weepinbell":"0070","Victreebel":"0071","Pansage":"0511","Simisage":"0512","Pansear":"0513","Simisear":"0514","Panpour":"0515","Simipour":"0516","Meditite":"0307","Medicham":"0308","Electrike":"0309","Manectric":"0310","Ralts":"0280","Kirlia":"0281","Gardevoir":"0282","Gallade":"0475","Houndour":"0228","Houndoom":"0229","Swablu":"0333","Altaria":"0334","Audino":"0531","Spritzee":"0682","Aromatisse":"0683","Swirlix":"0684","Slurpuff":"0685","Eevee":"0133","Vaporeon":"0134","Jolteon":"0135","Flareon":"0136","Espeon":"0196","Umbreon":"0197","Leafeon":"0470","Glaceon":"0471","Sylveon":"0700","Buneary":"0427","Lopunny":"0428","Shuppet":"0353","Banette":"0354","Vanillite":"0582","Vanillish":"0583","Vanilluxe":"0584","Numel":"0322","Camerupt":"0323","Hippopotas":"0449","Hippowdon":"0450","Drilbur":"0529","Excadrill":"0530","Sandile":"0551","Krokorok":"0552","Krookodile":"0553","Machop":"0066","Machoke":"0067","Machamp":"0068","Gible":"0443","Gabite":"0444","Garchomp":"0445","Carbink":"0703","Sableye":"0302","Mawile":"0303","Absol":"0359","Riolu":"0447","Lucario":"0448","Slowpoke":"0079","Slowbro":"0080","Slowking":"0199","Carvanha":"0318","Sharpedo":"0319","Tynamo":"0602","Eelektrik":"0603","Eelektross":"0604","Dratini":"0147","Dragonair":"0148","Dragonite":"0149","Bulbasaur":"0001","Ivysaur":"0002","Venusaur":"0003","Charmander":"0004","Charmeleon":"0005","Charizard":"0006","Squirtle":"0007","Wartortle":"0008","Blastoise":"0009","Stunfisk":"0618","Furfrou":"0676","Inkay":"0686","Malamar":"0687","Skrelp":"0690","Dragalge":"0691","Clauncher":"0692","Clawitzer":"0693","Goomy":"0704","Sliggoo":"0705","Goodra":"0706","Delibird":"0225","Snorunt":"0361","Glalie":"0362","Froslass":"0478","Snover":"0459","Abomasnow":"0460","Bergmite":"0712","Avalugg":"0713","Scyther":"0123","Scizor":"0212","Pinsir":"0127","Heracross":"0214","Emolga":"0587","Hawlucha":"0701","Phantump":"0708","Trevenant":"0709","Scraggy":"0559","Scrafty":"0560","Noibat":"0714","Noivern":"0715","Klefki":"0707","Litwick":"0607","Lampent":"0608","Chandelure":"0609","Aerodactyl":"0142","Tyrunt":"0696","Tyrantrum":"0697","Amaura":"0698","Aurorus":"0699","Onix":"0095","Steelix":"0208","Aron":"0304","Lairon":"0305","Aggron":"0306","Helioptile":"0694","Heliolisk":"0695","Pumpkaboo":"0710","Gourgeist":"0711","Larvitar":"0246","Pupitar":"0247","Tyranitar":"0248","Froakie":"0656","Frogadier":"0657","Greninja":"0658","Falinks":"0870","Chespin":"0650","Quilladin":"0651","Chesnaught":"0652","Skarmory":"0227","Fennekin":"0653","Braixen":"0654","Delphox":"0655","Bagon":"0371","Shelgon":"0372","Salamence":"0373","Kangaskhan":"0115","Drampa":"0780","Beldum":"0374","Metang":"0375","Metagross":"0376","Xerneas":"0716","Yveltal":"0717","Zygarde":"0718"});
+    ["Xerneas", "Yveltal", "Zygarde"].forEach(n => LEGENDARY.add(n));
+
     const UI_KEY = "za-dlc-ui";
     let typePanelCollapsed = false;
     let imagesOn = true;
-    try { const u = JSON.parse(localStorage.getItem(UI_KEY) || "{}"); typePanelCollapsed = !!u.typeCollapsed; if (u.images === false) imagesOn = false; } catch {}
-    function saveUI() { try { localStorage.setItem(UI_KEY, JSON.stringify({ typeCollapsed: typePanelCollapsed, images: imagesOn })); } catch {} }
+    let dexView = "all";
+    try { const u = JSON.parse(localStorage.getItem(UI_KEY) || "{}"); typePanelCollapsed = !!u.typeCollapsed; if (u.images === false) imagesOn = false; if (["all", "L", "H"].includes(u.dex)) dexView = u.dex; } catch {}
+    function saveUI() { try { localStorage.setItem(UI_KEY, JSON.stringify({ typeCollapsed: typePanelCollapsed, images: imagesOn, dex: dexView })); } catch {} }
     let filter = "all";
     let search = "";
 
@@ -338,14 +360,22 @@
 
     function pad(n) { return String(n).padStart(3, "0"); }
 
+    const inView = p => dexView === "all" || p.dex === dexView;
     function updateProgress() {
       const n = caught.size;
       const pct = Math.round((n / total) * 100);
       document.getElementById("progress-text").textContent = `${n} / ${total} caught (${pct}%)`;
       document.getElementById("progress-fill").style.width = pct + "%";
-      document.getElementById("btn-all").textContent = `All (${total})`;
-      document.getElementById("btn-needed").textContent = `Needed (${total - n})`;
-      document.getElementById("btn-caught").textContent = `Caught (${n})`;
+      const scope = POKEMON.filter(inView);
+      const scopeCaught = scope.filter(p => caught.has(p.id)).length;
+      document.getElementById("btn-all").textContent = `All (${scope.length})`;
+      document.getElementById("btn-needed").textContent = `Needed (${scope.length - scopeCaught})`;
+      document.getElementById("btn-caught").textContent = `Caught (${scopeCaught})`;
+      const cnt = d => { const l = POKEMON.filter(p => p.dex === d); return `${l.filter(p => caught.has(p.id)).length}/${l.length}`; };
+      document.getElementById("dex-all").textContent = "Both";
+      document.getElementById("dex-L").textContent = "Lumiose " + cnt("L");
+      document.getElementById("dex-H").textContent = "Hyperspace " + cnt("H");
+      document.querySelectorAll(".dex-btn").forEach(b => b.classList.toggle("active", b.dataset.dex === dexView));
       document.getElementById("complete").style.display = n === total ? "block" : "none";
     }
 
@@ -388,27 +418,36 @@
         const ms = p.name.toLowerCase().includes(q);
         const mf = filter === "all" || (filter === "caught" && caught.has(p.id)) || (filter === "needed" && !caught.has(p.id));
         const ml = !(hideLegendary && LEGENDARY.has(p.name));
-        return ms && mf && ml;
+        return ms && mf && ml && inView(p);
       });
       const visible = typeFilter ? base.filter(p => typesOf(p.name).includes(typeFilter)) : base;
       document.getElementById("empty").style.display = visible.length === 0 ? "block" : "none";
       renderTypeCounts(base, visible);
       grid.innerHTML = "";
+      let lastDex = null;
       visible.forEach(p => {
+        if (dexView === "all" && p.dex !== lastDex) {
+          const list = POKEMON.filter(x => x.dex === p.dex);
+          const h = document.createElement("div");
+          h.className = "dex-head";
+          h.textContent = `${p.dex === "L" ? "Lumiose Pokédex" : "Hyperspace Pokédex (DLC)"} · ${list.filter(x => caught.has(x.id)).length}/${list.length}`;
+          grid.appendChild(h);
+          lastDex = p.dex;
+        }
         const isCaught = caught.has(p.id);
         const btn = document.createElement("button");
         btn.className = "poke-btn" + (isCaught ? " caught" : "") + (imagesOn ? " v" : "");
         const tags = typesOf(p.name).map(t => `<span class="type-tag" style="background:${TYPE_COLOURS[t]}">${typeIco(t)}${t}</span>`).join("");
         const sp = spriteUrl(p.name);
         btn.innerHTML = imagesOn
-          ? `<div class="card-head"><div class="checkbox">${isCaught ? "✓" : ""}</div><div class="poke-num">#${pad(p.id)}</div></div>
+          ? `<div class="card-head"><div class="checkbox">${isCaught ? "✓" : ""}</div><div class="poke-num">${dexLabel(p)}</div></div>
           ${sp ? `<img class="sprite" src="${sp}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ""}
           <div class="poke-name">${p.name}</div>
           <div class="type-tags">${tags}</div>`
           : `
           <div class="checkbox">${isCaught ? "✓" : ""}</div>
           <div>
-            <div class="poke-num">#${pad(p.id)}</div>
+            <div class="poke-num">${dexLabel(p)}</div>
             <div class="poke-name">${p.name}</div>
             <div class="type-tags">${tags}</div>
           </div>`;
@@ -477,7 +516,7 @@
           const parsed = JSON.parse(ev.target.result);
           const raw = Array.isArray(parsed) ? parsed : parsed.caught;
           if (!Array.isArray(raw)) throw new Error("bad");
-          const ids = [...new Set(raw.map(Number).filter(n => Number.isInteger(n) && n >= 1 && n <= total))];
+          const ids = [...new Set(raw.map(Number).filter(n => VALID_IDS.has(n)))];
           const added = ids.filter(id => !caught.has(id));
           if (!ids.length) { alert("That file has no ticked Pokémon in it. Nothing was changed."); return; }
           if (!added.length) { alert("Nothing new to add: everything ticked in that file is already ticked here. Your progress is unchanged."); return; }
@@ -499,6 +538,12 @@
       saveUI();
       render();
     });
+
+    document.querySelectorAll(".dex-btn").forEach(b => b.addEventListener("click", () => {
+      dexView = b.dataset.dex;
+      saveUI();
+      render();
+    }));
 
     render();
 
