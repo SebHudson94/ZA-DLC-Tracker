@@ -106,9 +106,19 @@
     }
 
     .type-box { background: rgba(255,255,255,0.06); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; border: 1px solid rgba(142,45,226,0.25); }
-    .type-head { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; opacity: 0.8; }
+    .type-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 8px; cursor: pointer; user-select: none; }
+    .type-head .t-left { opacity: 0.85; }
+    .type-head .t-right { opacity: 0.6; text-align: right; }
+    .type-head .chev { display: inline-block; width: 14px; transition: transform 0.15s; }
+    .type-box.collapsed .type-head { margin-bottom: 0; }
+    .type-box.collapsed .type-chips { display: none; }
+    .type-box.collapsed .chev { transform: rotate(-90deg); }
+    #type-active { display: none; margin-left: 8px; padding: 2px 8px; border-radius: 99px; background: rgba(224,69,122,0.35); border: 1px solid rgba(224,69,122,0.7); color: #fff; font-weight: 700; }
+    #type-active.on { display: inline-block; }
     .type-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-    .type-chip { display: flex; align-items: center; gap: 6px; padding: 4px 9px 4px 4px; border-radius: 99px; background: rgba(255,255,255,0.07); font-size: 12px; }
+    .type-chip { display: flex; align-items: center; gap: 6px; padding: 4px 9px 4px 4px; border-radius: 99px; background: rgba(255,255,255,0.07); border: 1.5px solid transparent; color: #e8e0ff; font-size: 12px; cursor: pointer; font-family: inherit; }
+    .type-chip.active { border-color: #fff; background: rgba(255,255,255,0.18); font-weight: 700; }
+    .type-chip.zero { opacity: 0.5; }
     .type-chip .tn { font-weight: 700; min-width: 22px; text-align: center; padding: 2px 6px; border-radius: 99px; color: #fff; font-size: 12px; }
     .type-tags { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; }
     .type-tag { font-size: 9px; padding: 1px 5px; border-radius: 3px; color: #fff; opacity: 0.9; }
@@ -147,8 +157,8 @@
       <button class="filter-btn" data-filter="caught" id="btn-caught">Caught (0)</button>
       <button class="legend-btn" id="btn-legend">Hide legendaries: Off</button>
     </div>
-    <div class="type-box">
-      <div class="type-head"><span id="type-title">Types in view</span><span id="type-count"></span></div>
+    <div class="type-box" id="type-box">
+      <div class="type-head" id="type-head"><span class="t-left"><span class="chev">▾</span><span id="type-title">Types in view</span><span id="type-active"></span></span><span class="t-right" id="type-count"></span></div>
       <div class="type-chips" id="type-chips"></div>
     </div>
     <div class="grid" id="grid"></div>
@@ -280,6 +290,10 @@
       if (saved) caught = new Set(JSON.parse(saved));
     } catch {}
 
+    let typeFilter = null;
+    const UI_KEY = "za-dlc-ui";
+    let typePanelCollapsed = false;
+    try { typePanelCollapsed = !!JSON.parse(localStorage.getItem(UI_KEY) || "{}").typeCollapsed; } catch {}
     let filter = "all";
     let search = "";
 
@@ -300,29 +314,50 @@
       document.getElementById("complete").style.display = n === total ? "block" : "none";
     }
 
-    function renderTypeCounts(visible) {
+    function renderTypeCounts(base, visible) {
+      // Counts come from the list *before* the type filter, so chips stay put while one is selected
       const counts = {};
-      visible.forEach(p => typesOf(p.name).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+      base.forEach(p => typesOf(p.name).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+      if (typeFilter && !(typeFilter in counts)) counts[typeFilter] = 0;
       const rows = Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
       const label = filter === "needed" ? "Types still needed" : filter === "caught" ? "Types caught" : "Types in view";
       document.getElementById("type-title").textContent = label;
-      document.getElementById("type-count").textContent = `${visible.length} Pokémon (dual types count twice)`;
-      document.getElementById("type-chips").innerHTML = rows.length
-        ? rows.map(([t, n]) => `<div class="type-chip"><span class="tn" style="background:${TYPE_COLOURS[t]}">${n}</span>${t}</div>`).join("")
-        : '<span style="opacity:.5;font-size:12px">Nothing to show</span>';
+      const act = document.getElementById("type-active");
+      act.textContent = typeFilter ? typeFilter + " ✕" : "";
+      act.classList.toggle("on", !!typeFilter);
+      document.getElementById("type-count").textContent = typeFilter
+        ? `${visible.length} of ${base.length} shown`
+        : `${base.length} Pokémon · dual types count twice`;
+      const box = document.getElementById("type-chips");
+      box.innerHTML = "";
+      if (!rows.length) {
+        box.innerHTML = '<span style="opacity:.5;font-size:12px">Nothing to show</span>';
+        return;
+      }
+      rows.forEach(([t, n]) => {
+        const b = document.createElement("button");
+        b.className = "type-chip" + (typeFilter === t ? " active" : "") + (n === 0 ? " zero" : "");
+        b.innerHTML = `<span class="tn" style="background:${TYPE_COLOURS[t]}">${n}</span>${t}`;
+        b.addEventListener("click", () => {
+          typeFilter = typeFilter === t ? null : t;
+          render();
+        });
+        box.appendChild(b);
+      });
     }
 
     function render() {
       const grid = document.getElementById("grid");
       const q = search.toLowerCase();
-      const visible = POKEMON.filter(p => {
+      const base = POKEMON.filter(p => {
         const ms = p.name.toLowerCase().includes(q);
         const mf = filter === "all" || (filter === "caught" && caught.has(p.id)) || (filter === "needed" && !caught.has(p.id));
         const ml = !(hideLegendary && LEGENDARY.has(p.name));
         return ms && mf && ml;
       });
+      const visible = typeFilter ? base.filter(p => typesOf(p.name).includes(typeFilter)) : base;
       document.getElementById("empty").style.display = visible.length === 0 ? "block" : "none";
-      renderTypeCounts(visible);
+      renderTypeCounts(base, visible);
       grid.innerHTML = "";
       visible.forEach(p => {
         const isCaught = caught.has(p.id);
@@ -366,6 +401,15 @@
       e.currentTarget.classList.toggle("on", hideLegendary);
       e.currentTarget.textContent = "Hide legendaries: " + (hideLegendary ? "On" : "Off");
       render();
+    });
+
+    const typeBox = document.getElementById("type-box");
+    typeBox.classList.toggle("collapsed", typePanelCollapsed);
+    document.getElementById("type-head").addEventListener("click", e => {
+      if (e.target.closest("#type-active")) { typeFilter = null; render(); return; }
+      typePanelCollapsed = !typePanelCollapsed;
+      typeBox.classList.toggle("collapsed", typePanelCollapsed);
+      try { localStorage.setItem(UI_KEY, JSON.stringify({ typeCollapsed: typePanelCollapsed })); } catch {}
     });
 
     render();
