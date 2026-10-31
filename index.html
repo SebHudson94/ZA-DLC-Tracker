@@ -128,6 +128,14 @@
     .io-btn { flex: 1; padding: 9px; border-radius: 8px; border: 1px solid rgba(142,45,226,0.35); background: rgba(255,255,255,0.07); color: #b0a8d8; font-size: 12px; cursor: pointer; font-family: inherit; }
     .io-btn:active { background: rgba(142,45,226,0.4); }
     .io-note { font-size: 10px; opacity: 0.5; margin-bottom: 14px; line-height: 1.4; }
+    .poke-btn.v { flex-direction: column; align-items: stretch; gap: 2px; padding: 8px 10px; }
+    .poke-btn.v .card-head { display: flex; align-items: center; gap: 8px; }
+    .poke-btn.v .poke-name { text-align: center; margin-top: 0; }
+    .poke-btn.v .type-tags { justify-content: center; }
+    .sprite { width: 64px; height: 64px; object-fit: contain; display: block; margin: 0 auto; }
+    .sprite.broken { visibility: hidden; }
+    .type-ico { height: 11px; width: auto; vertical-align: -1px; margin-right: 3px; }
+    .type-ico.broken { display: none; }
     .poke-num { font-size: 10px; opacity: 0.5; letter-spacing: 0.5px; line-height: 1; }
     .poke-name { font-size: 13px; color: #b0a8d8; line-height: 1.3; margin-top: 2px; }
     .poke-btn.caught .poke-name { color: #e8e0ff; font-weight: 600; }
@@ -166,6 +174,7 @@
       <button class="filter-btn" data-filter="needed" id="btn-needed">Needed (132)</button>
       <button class="filter-btn" data-filter="caught" id="btn-caught">Caught (0)</button>
       <button class="legend-btn" id="btn-legend">Hide legendaries: Off</button>
+      <button class="legend-btn" id="btn-imgs">Images: On</button>
     </div>
     <div class="type-box" id="type-box">
       <div class="type-head" id="type-head"><span class="t-left"><span class="chev">▾</span><span id="type-title">Types in view</span><span id="type-active"></span></span><span class="t-right" id="type-count"></span></div>
@@ -301,9 +310,25 @@
     } catch {}
 
     let typeFilter = null;
+    // Sprites + type icons are hosted by PokéJungle (same scheme as the HOME organizer spreadsheet)
+    const NAT = {"Mankey":"0056","Primeape":"0057","Annihilape":"0979","Meowth":"0052","Persian":"0053","Perrserker":"0863","Farfetch'd":"0083","Sirfetch'd":"0865","Cubone":"0104","Marowak":"0105","Porygon":"0137","Porygon2":"0233","Porygon-Z":"0474","Capsakid":"0951","Scovillain":"0952","Tinkatink":"0957","Tinkatuff":"0958","Tinkaton":"0959","Cyclizar":"0967","Glimmet":"0969","Glimmora":"0970","Rotom":"0479","Greavard":"0971","Houndstone":"0972","Sandygast":"0769","Palossand":"0770","Kecleon":"0352","Flamigo":"0973","Cryogonal":"0615","Dondozo":"0977","Tatsugiri":"0978","Frigibax":"0996","Arctibax":"0997","Baxcalibur":"0998","Gimmighoul":"0999","Gholdengo":"1000","Qwilfish":"0211","Overqwil":"0904","Treecko":"0252","Grovyle":"0253","Sceptile":"0254","Torchic":"0255","Combusken":"0256","Blaziken":"0257","Mudkip":"0258","Marshtomp":"0259","Swampert":"0260","Feebas":"0349","Milotic":"0350","Chingling":"0433","Chimecho":"0358","Indeedee":"0876","Purrloin":"0509","Liepard":"0510","Munna":"0517","Musharna":"0518","Throh":"0538","Sawk":"0539","Yamask":"0562","Cofagrigus":"0563","Runerigus":"0867","Wimpod":"0767","Golisopod":"0768","Nickit":"0827","Thievul":"0828","Clobbopus":"0852","Grapploct":"0853","Mimikyu":"0778","Kleavor":"0900","Morpeko":"0877","Golett":"0622","Golurk":"0623","Rookidee":"0821","Corvisquire":"0822","Corviknight":"0823","Igglybuff":"0174","Jigglypuff":"0039","Wigglytuff":"0040","Fidough":"0926","Dachsbun":"0927","Starly":"0396","Staravia":"0397","Staraptor":"0398","Spoink":"0325","Grumpig":"0326","Squawkabilly":"0931","Crabrawler":"0739","Crabominable":"0740","Nacli":"0932","Naclstack":"0933","Garganacl":"0934","Gulpin":"0316","Swalot":"0317","Zubat":"0041","Golbat":"0042","Crobat":"0169","Charcadet":"0935","Armarouge":"0936","Ceruledge":"0937","Maschiff":"0942","Mabosstiff":"0943","Toxel":"0848","Toxtricity":"0849","Shroodle":"0944","Grafaiai":"0945","Zangoose":"0335","Seviper":"0336","Mime Jr.":"0439","Mr. Mime":"0122","Mr. Rime":"0866","Foongus":"0590","Amoonguss":"0591","Heatran":"0485","Volcanion":"0721","Cobalion":"0638","Terrakion":"0639","Virizion":"0640","Keldeo":"0647","Meloetta":"0648","Genesect":"0649","Hoopa":"0720","Marshadow":"0802","Meltan":"0808","Melmetal":"0809","Darkrai":"0491","Latias":"0380","Latios":"0381","Kyogre":"0382","Groudon":"0383","Rayquaza":"0384","Magearna":"0801","Zeraora":"0807"};
+    function spriteUrl(name) {
+      const n = NAT[name];
+      if (!n) return "";
+      const num = parseInt(n, 10);
+      return "https://pokejungle.net/sprites/shiny/" + n + ".png" + (num >= 1001 && num <= 1016 ? "?v=2" : "");
+    }
+    const typeIco = t => imagesOn ? `<img class="type-ico" src="https://pokejungle.net/sprites/typeico/${t.toLowerCase()}.png" alt="" referrerpolicy="no-referrer">` : "";
+    document.addEventListener("error", e => {
+      const c = e.target && e.target.classList;
+      if (c && (c.contains("sprite") || c.contains("type-ico"))) c.add("broken");
+    }, true);
+
     const UI_KEY = "za-dlc-ui";
     let typePanelCollapsed = false;
-    try { typePanelCollapsed = !!JSON.parse(localStorage.getItem(UI_KEY) || "{}").typeCollapsed; } catch {}
+    let imagesOn = true;
+    try { const u = JSON.parse(localStorage.getItem(UI_KEY) || "{}"); typePanelCollapsed = !!u.typeCollapsed; if (u.images === false) imagesOn = false; } catch {}
+    function saveUI() { try { localStorage.setItem(UI_KEY, JSON.stringify({ typeCollapsed: typePanelCollapsed, images: imagesOn })); } catch {} }
     let filter = "all";
     let search = "";
 
@@ -347,7 +372,7 @@
       rows.forEach(([t, n]) => {
         const b = document.createElement("button");
         b.className = "type-chip" + (typeFilter === t ? " active" : "") + (n === 0 ? " zero" : "");
-        b.innerHTML = `<span class="tn" style="background:${TYPE_COLOURS[t]}">${n}</span>${t}`;
+        b.innerHTML = `<span class="tn" style="background:${TYPE_COLOURS[t]}">${n}</span>${typeIco(t)}${t}`;
         b.addEventListener("click", () => {
           typeFilter = typeFilter === t ? null : t;
           render();
@@ -372,13 +397,20 @@
       visible.forEach(p => {
         const isCaught = caught.has(p.id);
         const btn = document.createElement("button");
-        btn.className = "poke-btn" + (isCaught ? " caught" : "");
-        btn.innerHTML = `
+        btn.className = "poke-btn" + (isCaught ? " caught" : "") + (imagesOn ? " v" : "");
+        const tags = typesOf(p.name).map(t => `<span class="type-tag" style="background:${TYPE_COLOURS[t]}">${typeIco(t)}${t}</span>`).join("");
+        const sp = spriteUrl(p.name);
+        btn.innerHTML = imagesOn
+          ? `<div class="card-head"><div class="checkbox">${isCaught ? "✓" : ""}</div><div class="poke-num">#${pad(p.id)}</div></div>
+          ${sp ? `<img class="sprite" src="${sp}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">` : ""}
+          <div class="poke-name">${p.name}</div>
+          <div class="type-tags">${tags}</div>`
+          : `
           <div class="checkbox">${isCaught ? "✓" : ""}</div>
           <div>
             <div class="poke-num">#${pad(p.id)}</div>
             <div class="poke-name">${p.name}</div>
-            <div class="type-tags">${typesOf(p.name).map(t => `<span class="type-tag" style="background:${TYPE_COLOURS[t]}">${t}</span>`).join("")}</div>
+            <div class="type-tags">${tags}</div>
           </div>`;
         btn.addEventListener("click", () => {
           if (caught.has(p.id)) caught.delete(p.id);
@@ -419,7 +451,7 @@
       if (e.target.closest("#type-active")) { typeFilter = null; render(); return; }
       typePanelCollapsed = !typePanelCollapsed;
       typeBox.classList.toggle("collapsed", typePanelCollapsed);
-      try { localStorage.setItem(UI_KEY, JSON.stringify({ typeCollapsed: typePanelCollapsed })); } catch {}
+      saveUI();
     });
 
     // ── Export / import (merge only: can never remove existing ticks) ──
@@ -458,6 +490,14 @@
       };
       reader.readAsText(file);
       e.target.value = "";
+    });
+
+    document.getElementById("btn-imgs").textContent = "Images: " + (imagesOn ? "On" : "Off");
+    document.getElementById("btn-imgs").addEventListener("click", e => {
+      imagesOn = !imagesOn;
+      e.currentTarget.textContent = "Images: " + (imagesOn ? "On" : "Off");
+      saveUI();
+      render();
     });
 
     render();

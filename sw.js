@@ -1,4 +1,4 @@
-const CACHE = "za-tracker-v2";
+const CACHE = "za-tracker-v3";
 const FILES = ["./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", e => {
@@ -15,6 +15,7 @@ self.addEventListener("activate", e => {
 
 // Network first so updates show up straight away; cache is the offline fallback
 self.addEventListener("fetch", e => {
+  if (new URL(e.request.url).origin !== self.location.origin) return;   // leave sprites to the browser cache
   e.respondWith(
     fetch(e.request).then(res => {
       const copy = res.clone();
